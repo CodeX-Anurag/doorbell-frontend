@@ -1,60 +1,42 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
-  margin: 0;
-  padding: 0;
-}
-
-.container {
+.alert {
+  background-color: #ff5252;
+  color: white;
+  padding: 10px;
   text-align: center;
-  padding: 20px;
+  font-weight: bold;
+  border-radius: 4px;
+  margin-bottom: 20px;
 }
 
-h1 {
-  color: #333;
+.upload-section {
+  text-align: center;
+  margin-bottom: 25px;
 }
 
 .gallery {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
   gap: 15px;
-  margin-top: 20px;
 }
 
 .card {
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  padding: 10px;
-  width: 240px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  text-align: center;
 }
 
 .card img {
   width: 100%;
-  border-radius: 8px;
+  max-height: 400px;
+  object-fit: contain;
+  background: #f4f4f4;
 }
 
 .card p {
-  font-size: 0.9em;
+  margin: 8px;
   color: #555;
-  margin-top: 5px;
-}
-
-.upload-btn {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #007bff;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 25px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.upload-btn:hover {
-  background: #0056b3;
+  font-size: 14px;
 }
 

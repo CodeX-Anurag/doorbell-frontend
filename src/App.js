@@ -1,78 +1,88 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { io } from "socket.io-client";
+import { API_BASE } from "./api";
 import "./App.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const socket = io(API_BASE);
 
-export default function App() {
+function App() {
   const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [alertMessage, setAlertMessage] = useState("");
 
+  // Fetch existing images
   const fetchImages = async () => {
-    setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/images`);
-      const data = await res.json();
-      setImages(data);
+      const res = await axios.get(`${API_BASE}/images`);
+      setImages(res.data);
     } catch (err) {
-      console.error("Failed to fetch images:", err);
+      console.error("Error fetching images:", err);
     }
-    setLoading(false);
   };
 
-  useEffect(() => {
-    fetchImages();
-  }, []);
+  // Handle file selection
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
 
-  const handleUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Upload image
+  const handleUpload = async () => {
+    if (!selectedFile) return alert("Select a file first!");
 
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("image", selectedFile);
 
     try {
-      await fetch(`${BACKEND_URL}/upload`, {
-        method: "POST",
-        body: formData,
+      await axios.post(`${API_BASE}/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      alert("✅ Uploaded successfully!");
-      fetchImages(); // refresh list
+      setSelectedFile(null);
     } catch (err) {
-      alert("❌ Upload failed.");
+      console.error("Upload failed:", err);
     }
   };
 
+  // Handle doorbell + new image notifications
+  useEffect(() => {
+    fetchImages();
+
+    socket.on("doorbell", (data) => {
+      setAlertMessage(data.message);
+      setTimeout(() => setAlertMessage(""), 5000);
+    });
+
+    socket.on("new_image", (data) => {
+      setImages((prev) => [data.image, ...prev]);
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
   return (
-    <div className="container">
-      <h1>📸 Doorbell Camera</h1>
+    <div>
+      {alertMessage && <div className="alert">{alertMessage}</div>}
 
-      {loading ? (
-        <p>Loading images...</p>
-      ) : (
-        <div className="gallery">
-          {images.length === 0 ? (
-            <p>No images yet.</p>
-          ) : (
-            images.map((img) => (
-              <div className="card" key={img.id}>
-                <img src={img.base64} alt={img.filename} />
-                <p>{new Date(img.uploadedAt).toLocaleString()}</p>
-              </div>
-            ))
-          )}
-        </div>
-      )}
+      <div className="upload-section">
+        <input type="file" onChange={handleFileChange} />
+        <button onClick={handleUpload}>Upload Test Image</button>
+      </div>
 
-      <label className="upload-btn">
-        ⬆️ Upload Test Image
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleUpload}
-          hidden
-        />
-      </label>
+      <div className="gallery">
+        {images.map((img) => (
+          <div key={img._id} className="card">
+            <img
+              src={`${API_BASE}${img.path}`}
+              alt={img.filename}
+              loading="lazy"
+            />
+            <p>{new Date(img.uploadedAt).toLocaleString()}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
+
+export default App;
 
