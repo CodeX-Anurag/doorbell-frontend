@@ -1,46 +1,63 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import API_BASE from "./api";
 import io from "socket.io-client";
+import "./App.css";
 
-const API = "https://doorbell-backend.onrender.com";
-const socket = io(API);
+const socket = io(API_BASE);
 
 function App() {
   const [images, setImages] = useState([]);
-  const [viewImage, setViewImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [notif, setNotif] = useState(null);
 
   useEffect(() => {
-    fetch(`${API}/images`)
-      .then((res) => res.json())
-      .then(setImages);
+    fetchImages();
 
-    socket.on("new_image", (data) => {
-      setImages((prev) => [data, ...prev]);
+    socket.on("doorbell", () => {
+      setNotif("🚪 Someone rang the doorbell!");
+      setTimeout(() => setNotif(null), 5000);
+      fetchImages();
     });
+
+    return () => socket.disconnect();
   }, []);
 
-  const openImage = async (id) => {
-    const res = await fetch(`${API}/images/${id}`);
+  const fetchImages = async () => {
+    const res = await fetch(`${API_BASE}/images`);
     const data = await res.json();
-    setViewImage(`data:image/png;base64,${data.data}`);
+    setImages(data);
+  };
+
+  const viewImage = async (id) => {
+    const res = await fetch(`${API_BASE}/images/${id}`);
+    const data = await res.json();
+    setSelectedImage(data);
   };
 
   return (
-    <div style={{ padding: "1rem", fontFamily: "sans-serif" }}>
-      <h2>🔔 Doorbell Log</h2>
-      <ul>
+    <div className="container">
+      <h1>Doorbell Camera</h1>
+      {notif && <div className="notification">{notif}</div>}
+
+      <ul className="image-list">
         {images.map((img) => (
           <li key={img._id}>
-            <strong>{new Date(img.uploadedAt).toLocaleString()}</strong>{" "}
-            - {img.filename}{" "}
-            <button onClick={() => openImage(img._id)}>View</button>
+            <span>{new Date(img.uploadedAt).toLocaleString()}</span>
+            <button onClick={() => viewImage(img._id)}>View</button>
           </li>
         ))}
       </ul>
 
-      {viewImage && (
-        <div>
-          <h3>Viewing Image</h3>
-          <img src={viewImage} alt="Doorbell" style={{ maxWidth: "100%" }} />
+      {selectedImage && (
+        <div className="image-viewer">
+          <button className="close" onClick={() => setSelectedImage(null)}>
+            ✖
+          </button>
+          <img
+            src={`data:image/jpeg;base64,${selectedImage.data}`}
+            alt="Doorbell"
+          />
+          <p>{new Date(selectedImage.uploadedAt).toLocaleString()}</p>
         </div>
       )}
     </div>
