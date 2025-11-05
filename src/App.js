@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 
-const BACKEND_URL = "https://doorbell-backend.onrender.com";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function App() {
   const [images, setImages] = useState([]);
