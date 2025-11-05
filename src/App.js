@@ -1,85 +1,48 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { io } from "socket.io-client";
-import { API_BASE } from "./api";
-import "./App.css";
+import { useEffect, useState } from "react";
+import io from "socket.io-client";
 
-const socket = io(API_BASE);
+const API = "https://doorbell-backend.onrender.com";
+const socket = io(API);
 
 function App() {
   const [images, setImages] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [alertMessage, setAlertMessage] = useState("");
+  const [viewImage, setViewImage] = useState(null);
 
-  // Fetch existing images
-  const fetchImages = async () => {
-    try {
-      const res = await axios.get(`${API_BASE}/images`);
-      setImages(res.data);
-    } catch (err) {
-      console.error("Error fetching images:", err);
-    }
-  };
-
-  // Handle file selection
-  const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
-  };
-
-  // Upload image
-  const handleUpload = async () => {
-    if (!selectedFile) return alert("Select a file first!");
-
-    const formData = new FormData();
-    formData.append("image", selectedFile);
-
-    try {
-      await axios.post(`${API_BASE}/upload`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setSelectedFile(null);
-    } catch (err) {
-      console.error("Upload failed:", err);
-    }
-  };
-
-  // Handle doorbell + new image notifications
   useEffect(() => {
-    fetchImages();
-
-    socket.on("doorbell", (data) => {
-      setAlertMessage(data.message);
-      setTimeout(() => setAlertMessage(""), 5000);
-    });
+    fetch(`${API}/images`)
+      .then((res) => res.json())
+      .then(setImages);
 
     socket.on("new_image", (data) => {
-      setImages((prev) => [data.image, ...prev]);
+      setImages((prev) => [data, ...prev]);
     });
-
-    return () => socket.disconnect();
   }, []);
 
+  const openImage = async (id) => {
+    const res = await fetch(`${API}/images/${id}`);
+    const data = await res.json();
+    setViewImage(`data:image/png;base64,${data.data}`);
+  };
+
   return (
-    <div>
-      {alertMessage && <div className="alert">{alertMessage}</div>}
-
-      <div className="upload-section">
-        <input type="file" onChange={handleFileChange} />
-        <button onClick={handleUpload}>Upload Test Image</button>
-      </div>
-
-      <div className="gallery">
+    <div style={{ padding: "1rem", fontFamily: "sans-serif" }}>
+      <h2>🔔 Doorbell Log</h2>
+      <ul>
         {images.map((img) => (
-          <div key={img._id} className="card">
-            <img
-              src={`${API_BASE}${img.path}`}
-              alt={img.filename}
-              loading="lazy"
-            />
-            <p>{new Date(img.uploadedAt).toLocaleString()}</p>
-          </div>
+          <li key={img._id}>
+            <strong>{new Date(img.uploadedAt).toLocaleString()}</strong>{" "}
+            - {img.filename}{" "}
+            <button onClick={() => openImage(img._id)}>View</button>
+          </li>
         ))}
-      </div>
+      </ul>
+
+      {viewImage && (
+        <div>
+          <h3>Viewing Image</h3>
+          <img src={viewImage} alt="Doorbell" style={{ maxWidth: "100%" }} />
+        </div>
+      )}
     </div>
   );
 }
