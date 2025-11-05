@@ -1,63 +1,79 @@
 import React, { useEffect, useState } from "react";
-import API_BASE from "./api";
-import io from "socket.io-client";
 import "./App.css";
-
-const socket = io(API_BASE);
+import { getImages, getImageById, BACKEND_URL } from "./api";
+import { io } from "socket.io-client";
 
 function App() {
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [notif, setNotif] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState("");
 
   useEffect(() => {
-    fetchImages();
+    loadImages();
 
+    // connect socket
+    const socket = io(BACKEND_URL, { transports: ["websocket"] });
+
+    // when new doorbell ping occurs
     socket.on("doorbell", () => {
-      setNotif("🚪 Someone rang the doorbell!");
-      setTimeout(() => setNotif(null), 5000);
-      fetchImages();
+      setNotification("🔔 Someone pressed the doorbell!");
+      setTimeout(() => setNotification(""), 5000);
+    });
+
+    // when new image added
+    socket.on("newImage", (data) => {
+      setNotification("🖼️ New image uploaded!");
+      setImages((prev) => [data, ...prev]);
+      setTimeout(() => setNotification(""), 5000);
     });
 
     return () => socket.disconnect();
   }, []);
 
-  const fetchImages = async () => {
-    const res = await fetch(`${API_BASE}/images`);
-    const data = await res.json();
-    setImages(data);
+  const loadImages = async () => {
+    try {
+      const data = await getImages();
+      const sorted = data.sort((a, b) => b.timestamp - a.timestamp);
+      setImages(sorted);
+    } catch (err) {
+      console.error("Error loading images:", err);
+    }
   };
 
-  const viewImage = async (id) => {
-    const res = await fetch(`${API_BASE}/images/${id}`);
-    const data = await res.json();
-    setSelectedImage(data);
+  const handleView = async (id) => {
+    setLoading(true);
+    try {
+      const data = await getImageById(id);
+      setSelectedImage(`data:image/jpeg;base64,${data.image}`);
+    } catch (err) {
+      console.error("Error loading image:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="container">
-      <h1>Doorbell Camera</h1>
-      {notif && <div className="notification">{notif}</div>}
+    <div className="App">
+      <h1>📸 Doorbell Activity Feed</h1>
 
-      <ul className="image-list">
+      {notification && <div className="notification">{notification}</div>}
+
+      <div className="image-list">
+        {images.length === 0 && <p>No images found</p>}
         {images.map((img) => (
-          <li key={img._id}>
-            <span>{new Date(img.uploadedAt).toLocaleString()}</span>
-            <button onClick={() => viewImage(img._id)}>View</button>
-          </li>
+          <div key={img._id} className="image-card">
+            <p><b>Time:</b> {new Date(img.timestamp).toLocaleString()}</p>
+            <button onClick={() => handleView(img._id)}>View</button>
+          </div>
         ))}
-      </ul>
+      </div>
+
+      {loading && <p>Loading image...</p>}
 
       {selectedImage && (
-        <div className="image-viewer">
-          <button className="close" onClick={() => setSelectedImage(null)}>
-            ✖
-          </button>
-          <img
-            src={`data:image/jpeg;base64,${selectedImage.data}`}
-            alt="Doorbell"
-          />
-          <p>{new Date(selectedImage.uploadedAt).toLocaleString()}</p>
+        <div className="popup" onClick={() => setSelectedImage(null)}>
+          <img src={selectedImage} alt="Captured" />
         </div>
       )}
     </div>

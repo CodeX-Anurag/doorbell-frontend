@@ -1,82 +1,70 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #fafafa;
-  margin: 0;
-  padding: 0;
-}
-
-.container {
-  max-width: 600px;
-  margin: 40px auto;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+.App {
+  font-family: sans-serif;
+  text-align: center;
   padding: 20px;
+  background: #f4f4f4;
 }
 
 h1 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.notification {
-  background: #ffeb3b;
-  padding: 10px;
-  text-align: center;
-  border-radius: 5px;
   margin-bottom: 10px;
 }
 
-.image-list {
-  list-style: none;
-  padding: 0;
+.notification {
+  background-color: #28a745;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  width: fit-content;
+  margin: 10px auto;
+  animation: fadeInOut 5s forwards;
 }
 
-.image-list li {
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10%, 90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.image-list {
   display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  border-bottom: 1px solid #eee;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.image-card {
+  background: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  width: 260px;
 }
 
 button {
-  background: #007bff;
-  color: white;
+  background-color: #007bff;
   border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
 button:hover {
-  background: #0056b3;
+  background-color: #0056b3;
 }
 
-.image-viewer {
+.popup {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.8);
+  top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
+  background: rgba(0,0,0,0.8);
 }
 
-.image-viewer img {
+.popup img {
   max-width: 90%;
-  max-height: 80%;
+  max-height: 90%;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(255,255,255,0.3);
-}
-
-.image-viewer .close {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: red;
-  color: white;
 }
 
