@@ -1,70 +1,51 @@
-.App {
-  font-family: sans-serif;
-  text-align: center;
-  padding: 20px;
+body {
   background: #f4f4f4;
+  font-family: Arial, sans-serif;
 }
 
-h1 {
-  margin-bottom: 10px;
+.container {
+  max-width: 600px;
+  margin: 20px auto;
+  background: white;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-.notification {
-  background-color: #28a745;
-  color: white;
-  padding: 10px;
-  border-radius: 6px;
-  width: fit-content;
-  margin: 10px auto;
-  animation: fadeInOut 5s forwards;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; transform: translateY(-10px); }
-  10%, 90% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-10px); }
+h2 {
+  text-align: center;
+  color: #333;
 }
 
 .image-list {
+  list-style: none;
+  padding: 0;
+}
+
+.image-item {
+  border-bottom: 1px solid #eee;
+  padding: 10px;
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
 }
 
-.image-card {
-  background: white;
-  padding: 10px 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  width: 260px;
-}
-
-button {
-  background-color: #007bff;
-  border: none;
+.image-item button {
+  background: #007bff;
   color: white;
-  padding: 6px 12px;
-  border-radius: 5px;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
-button:hover {
-  background-color: #0056b3;
+.image-item button:hover {
+  background: #0056b3;
 }
 
-.popup {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0,0,0,0.8);
-}
-
-.popup img {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 8px;
+img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin-top: 10px;
 }
 

@@ -1,80 +1,85 @@
 import React, { useEffect, useState } from "react";
-import "./App.css";
-import { getImages, getImageById, BACKEND_URL } from "./api";
 import { io } from "socket.io-client";
+import { getImages, getImageById, BACKEND_URL } from "./api";
+import "./App.css";
 
 function App() {
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState("");
 
   useEffect(() => {
+    // Fetch image list
+    const loadImages = async () => {
+      const data = await getImages();
+      setImages(data);
+    };
     loadImages();
 
-    // connect socket
-    const socket = io(BACKEND_URL, { transports: ["websocket"] });
-
-    // when new doorbell ping occurs
-    socket.on("doorbell", () => {
-      setNotification("🔔 Someone pressed the doorbell!");
-      setTimeout(() => setNotification(""), 5000);
-    });
-
-    // when new image added
-    socket.on("newImage", (data) => {
-      setNotification("🖼️ New image uploaded!");
-      setImages((prev) => [data, ...prev]);
-      setTimeout(() => setNotification(""), 5000);
+    // Socket connection
+    const socket = io(BACKEND_URL);
+    socket.on("doorbell", (msg) => {
+      setNotification(msg);
+      setTimeout(() => setNotification(""), 4000);
+      loadImages(); // refresh list
     });
 
     return () => socket.disconnect();
   }, []);
 
-  const loadImages = async () => {
-    try {
-      const data = await getImages();
-      const sorted = data.sort((a, b) => b.timestamp - a.timestamp);
-      setImages(sorted);
-    } catch (err) {
-      console.error("Error loading images:", err);
-    }
-  };
-
   const handleView = async (id) => {
-    setLoading(true);
-    try {
-      const data = await getImageById(id);
-      setSelectedImage(`data:image/jpeg;base64,${data.image}`);
-    } catch (err) {
-      console.error("Error loading image:", err);
-    } finally {
-      setLoading(false);
-    }
+    const data = await getImageById(id);
+    if (data && data.data) setSelectedImage(data);
   };
 
   return (
-    <div className="App">
-      <h1>📸 Doorbell Activity Feed</h1>
-
-      {notification && <div className="notification">{notification}</div>}
-
-      <div className="image-list">
-        {images.length === 0 && <p>No images found</p>}
-        {images.map((img) => (
-          <div key={img._id} className="image-card">
-            <p><b>Time:</b> {new Date(img.timestamp).toLocaleString()}</p>
-            <button onClick={() => handleView(img._id)}>View</button>
-          </div>
-        ))}
-      </div>
-
-      {loading && <p>Loading image...</p>}
-
-      {selectedImage && (
-        <div className="popup" onClick={() => setSelectedImage(null)}>
-          <img src={selectedImage} alt="Captured" />
+    <div className="container">
+      <h2>Doorbell Activity Feed</h2>
+      {notification && (
+        <div
+          style={{
+            background: "#28a745",
+            color: "white",
+            padding: "10px",
+            borderRadius: "6px",
+            textAlign: "center",
+            marginBottom: "10px",
+          }}
+        >
+          {notification}
         </div>
+      )}
+
+      {selectedImage ? (
+        <div>
+          <button onClick={() => setSelectedImage(null)}>← Back</button>
+          <h4>{selectedImage.filename}</h4>
+          <img
+            src={`data:image/jpeg;base64,${selectedImage.data}`}
+            alt={selectedImage.filename}
+          />
+        </div>
+      ) : (
+        <>
+          {images.length === 0 ? (
+            <p style={{ textAlign: "center" }}>No doorbell images found.</p>
+          ) : (
+            <ul className="image-list">
+              {images.map((img) => (
+                <li key={img._id} className="image-item">
+                  <div>
+                    <strong>{img.filename}</strong>
+                    <br />
+                    <small>
+                      {new Date(img.uploadedAt).toLocaleString()}
+                    </small>
+                  </div>
+                  <button onClick={() => handleView(img._id)}>View</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
