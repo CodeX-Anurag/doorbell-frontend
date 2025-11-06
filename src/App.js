@@ -55,7 +55,7 @@ function App() {
           <button onClick={() => setSelectedImage(null)}>← Back</button>
           <h4>{selectedImage.filename}</h4>
           <img
-            src={`data:image/jpeg;base64,${selectedImage.data}`}
+  					src={`https://doorbell-backend.onrender.com/images/${selectedImage.filename}`}
             alt={selectedImage.filename}
           />
         </div>
